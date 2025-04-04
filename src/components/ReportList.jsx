@@ -1,14 +1,45 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { exportToExcel } from "@/lib/excelExport";
+import { useToast } from "@/components/ui/use-toast";
 
-function ReportList({ reports }) {
+function ReportList({ reports, isAdmin }) {
+  const { toast } = useToast();
   const sortedReports = [...reports].sort((a, b) => 
     new Date(b.timestamp) - new Date(a.timestamp)
   );
 
+  const handleExport = () => {
+    try {
+      exportToExcel(sortedReports);
+      toast({
+        title: "Export réussi",
+        description: "Les rapports ont été exportés avec succès",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur d'export",
+        description: "Une erreur est survenue lors de l'export",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {isAdmin && (
+        <div className="flex justify-end mb-4">
+          <Button
+            onClick={handleExport}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            Exporter vers Excel
+          </Button>
+        </div>
+      )}
+
       {sortedReports.length === 0 ? (
         <p className="text-center text-gray-500 py-8">
           Aucun rapport n'a encore été soumis.
