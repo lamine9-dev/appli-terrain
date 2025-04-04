@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { generateReportNumber } from "@/lib/reportManager";
 
 function ReportForm({ onSubmit, onCancel }) {
   const { toast } = useToast();
@@ -15,7 +16,7 @@ function ReportForm({ onSubmit, onCancel }) {
     location: "",
     clientFat: "",
     issueType: "",
-    status: "",
+    status: "offline",
     comment: "",
   });
 
@@ -46,9 +47,11 @@ function ReportForm({ onSubmit, onCancel }) {
       return;
     }
 
+    const reportNumber = generateReportNumber();
     const report = {
       ...formData,
       id: Date.now(),
+      reportNumber,
       timestamp: new Date().toISOString(),
     };
 
@@ -57,7 +60,7 @@ function ReportForm({ onSubmit, onCancel }) {
 
     toast({
       title: "Rapport soumis",
-      description: "Votre rapport a été enregistré avec succès",
+      description: `Rapport N° ${reportNumber} enregistré avec succès`,
     });
 
     onSubmit(report);
@@ -65,10 +68,10 @@ function ReportForm({ onSubmit, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
@@ -81,7 +84,7 @@ function ReportForm({ onSubmit, onCancel }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-blue-600">
-            Nom de l'équipe
+            Équipe
           </label>
           <select
             name="team"
@@ -90,7 +93,7 @@ function ReportForm({ onSubmit, onCancel }) {
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
-            <option value="">Sélectionnez une équipe</option>
+            <option value="">Sélectionner une équipe</option>
             {teams.map((team) => (
               <option key={team} value={team}>{team}</option>
             ))}
@@ -127,7 +130,7 @@ function ReportForm({ onSubmit, onCancel }) {
 
         <div>
           <label className="block text-sm font-medium text-blue-600">
-            Numéro de la ligne (8 chiffres)
+            Numéro de ligne (8 chiffres)
           </label>
           <input
             type="text"
@@ -180,7 +183,7 @@ function ReportForm({ onSubmit, onCancel }) {
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
-            <option value="">Sélectionnez le type de panne</option>
+            <option value="">Sélectionner le type de panne</option>
             {issueTypes.map((type) => (
               <option key={type} value={type}>{type}</option>
             ))}
@@ -198,7 +201,6 @@ function ReportForm({ onSubmit, onCancel }) {
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
-            <option value="">Sélectionnez le statut</option>
             {statuses.map((status) => (
               <option key={status} value={status}>{status}</option>
             ))}
@@ -213,21 +215,21 @@ function ReportForm({ onSubmit, onCancel }) {
             name="comment"
             value={formData.comment}
             onChange={handleChange}
-            rows={4}
+            rows="4"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
-        <div className="flex justify-end space-x-4 mt-6">
+        <div className="flex justify-end space-x-4">
           <Button
             type="button"
-            variant="outline"
             onClick={onCancel}
+            variant="outline"
             className="border-blue-500 text-blue-500 hover:bg-blue-50"
           >
             Annuler
           </Button>
-          <Button 
+          <Button
             type="submit"
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
