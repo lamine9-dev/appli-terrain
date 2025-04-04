@@ -1,21 +1,39 @@
 
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ReportForm from "@/components/ReportForm";
 import ReportList from "@/components/ReportList";
 import UserManagement from "@/components/UserManagement";
+import MissionManagement from "@/components/MissionManagement";
+import { checkAndExport } from "@/lib/reportManager";
+import { useToast } from "@/components/ui/use-toast";
 
 function Dashboard({ currentUser, onLogout }) {
+  const { toast } = useToast();
   const [showReportForm, setShowReportForm] = useState(false);
   const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showMissionManagement, setShowMissionManagement] = useState(false);
   const [reports, setReports] = useState(
     JSON.parse(localStorage.getItem("reports") || "[]")
   );
 
+  // Vérifier l'export automatique au chargement
+  useEffect(() => {
+    const exportResult = checkAndExport();
+    if (exportResult?.success) {
+      toast({
+        title: "Export automatique",
+        description: exportResult.message,
+      });
+    }
+  }, []);
+
   const handleReportSubmit = (report) => {
-    setReports([...reports, report]);
+    const updatedReports = [...reports, report];
+    setReports(updatedReports);
+    localStorage.setItem("reports", JSON.stringify(updatedReports));
     setShowReportForm(false);
   };
 
@@ -36,24 +54,38 @@ function Dashboard({ currentUser, onLogout }) {
         </div>
         <div className="space-x-4">
           {currentUser.role === 'admin' && (
-            <Button
-              onClick={() => {
-                setShowReportForm(false);
-                setShowUserManagement(!showUserManagement);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {showUserManagement ? "Voir les rapports" : "Gérer les utilisateurs"}
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  setShowReportForm(false);
+                  setShowMissionManagement(false);
+                  setShowUserManagement(!showUserManagement);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {showUserManagement ? "Voir les rapports" : "Gérer les utilisateurs"}
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowReportForm(false);
+                  setShowUserManagement(false);
+                  setShowMissionManagement(!showMissionManagement);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {showMissionManagement ? "Voir les rapports" : "Gérer les missions"}
+              </Button>
+            </>
           )}
           <Button
             onClick={() => {
               setShowUserManagement(false);
-              setShowReportForm(true);
+              setShowMissionManagement(false);
+              setShowReportForm(!showReportForm);
             }}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            Nouveau Rapport
+            {showReportForm ? "Voir les rapports" : "Nouveau Rapport"}
           </Button>
           <Button
             variant="outline"
@@ -67,13 +99,15 @@ function Dashboard({ currentUser, onLogout }) {
 
       {showUserManagement && currentUser.role === 'admin' ? (
         <UserManagement />
+      ) : showMissionManagement && currentUser.role === 'admin' ? (
+        <MissionManagement />
       ) : showReportForm ? (
         <ReportForm
           onSubmit={handleReportSubmit}
           onCancel={() => setShowReportForm(false)}
         />
       ) : (
-        <ReportList reports={reports} />
+        <ReportList reports={reports} isAdmin={currentUser.role === 'admin'} />
       )}
     </motion.div>
   );
